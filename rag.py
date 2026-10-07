@@ -99,11 +99,15 @@ def split_text(text, chunk_size=500):
 
 def create_embedding(text):
 
-    response = ollama.embed(
-        model=EMBEDDING_MODEL,
-        input=text
-    )
+    # response = ollama.embed(
+    #     model=EMBEDDING_MODEL,
+    #     input=text
+    # )
 
+    response = client.embed(
+            model=EMBEDDING_MODEL,
+            input=text
+        )
     return response["embeddings"][0]
 
 
@@ -239,13 +243,18 @@ def search_documents(
 
 def ask_llm(question):
 
-    response = ollama.generate(
+    # response = ollama.generate(
 
-        model=LLM_MODEL,
+    #     model=LLM_MODEL,
 
-        prompt=question
-    )
-
+    #     prompt=question
+    # )
+    response = client.generate(
+   
+           model=LLM_MODEL,
+   
+           prompt=question
+       )
     return response["response"]
 
 
@@ -420,7 +429,7 @@ ANSWER:
     # Send context + question to Llama
     # -----------------------------------------------------
 
-    response = ollama.generate(
+    response = client.generate(
 
         model=LLM_MODEL,
 
