@@ -2,6 +2,7 @@ import os
 import ollama
 import chromadb
 
+from ollama import Client
 from pypdf import PdfReader
 
 
@@ -13,8 +14,8 @@ DOCUMENT_FOLDER = "documents"
 CHROMA_FOLDER = "chroma_db"
 
 EMBEDDING_MODEL = "nomic-embed-text"
-LLM_MODEL = "llama3.2"
-
+#LLM_MODEL = "llama3.2"
+LLM_MODEL = "gemma4:cloud"
 # Distance threshold
 # Lower distance = more similar
 RAG_DISTANCE_THRESHOLD = 1.2
@@ -24,13 +25,30 @@ RAG_DISTANCE_THRESHOLD = 1.2
 # ChromaDB
 # =========================================================
 
-client = chromadb.PersistentClient(
-    path=CHROMA_FOLDER
+# client = chromadb.PersistentClient(
+#     path=CHROMA_FOLDER
+# )
+
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+
+chroma_client = chromadb.PersistentClient(
+    path="./chroma_db"
 )
 
-collection = client.get_or_create_collection(
+collection = chroma_client.get_or_create_collection(
     name="documents"
 )
+
+client = Client(
+    host="https://ollama.com",
+    headers={
+        "Authorization": f"Bearer {OLLAMA_API_KEY}"
+    }
+)
+
+# collection = client.get_or_create_collection(
+#     name="documents"
+# )
 
 
 # =========================================================
