@@ -1,36 +1,54 @@
 from pydantic import BaseModel
 
-from rag import ingest_documents, ask_rag
+from rag import ingest_documents, ask_rag,test_ollama,test_embedding
 import ollama
 from fastapi import FastAPI
 from models import Product
 #from database import engine
 #from sqlalchemy import text
-#from rag import ingest_documents, ask_rag
+
 
 app = FastAPI()
 
 class Question(BaseModel):
     question: str
 
-@app.get("/db-test")
-def db_test():
-    with engine.connect() as connection:
-        result = connection.execute(text("SELECT GETDATE()"))
-        return {
-            "database_time": str(result.fetchone()[0])
-        }
+# @app.get("/db-test")
+# def db_test():
+#     with engine.connect() as connection:
+#         result = connection.execute(text("SELECT GETDATE()"))
+#         return {
+#             "database_time": str(result.fetchone()[0])
+#         }
 
 # --------------------------------
 # Load PDF into Vector Database
 # --------------------------------
+@app.get("/ollama-test")
+def ollama_test():
 
+    try:
+
+        answer = test_ollama()
+
+        return {
+            "success": True,
+            "answer": answer
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "error": str(e)
+        }
+    
 @app.post("/rag/ingest")
 def ingest():
 
     try:
-
-        ingest_documents()
+        test_embedding()
+    #    ingest_documents()
 
         return {
             "message": "Documents successfully indexed"
