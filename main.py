@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from backup_rag import ingest_documents, ask_rag,test_ollama,test_embedding
+from rag import ingest_documents, ask_rag
 import ollama
 from fastapi import FastAPI
 from models import Product
@@ -24,24 +24,24 @@ class Question(BaseModel):
 # --------------------------------
 # Load PDF into Vector Database
 # --------------------------------
-@app.get("/ollama-test")
-def ollama_test():
+# @app.get("/ollama-test")
+# def ollama_test():
 
-    try:
+#     try:
 
-        answer = test_ollama()
+#         answer = test_ollama()
 
-        return {
-            "success": True,
-            "answer": answer
-        }
+#         return {
+#             "success": True,
+#             "answer": answer
+#         }
 
-    except Exception as e:
+#     except Exception as e:
 
-        return {
-            "success": False,
-            "error": str(e)
-        }
+#         return {
+#             "success": False,
+#             "error": str(e)
+#         }
     
 @app.post("/rag/ingest")
 def ingest():
