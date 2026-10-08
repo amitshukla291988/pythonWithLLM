@@ -203,6 +203,23 @@ def ingest_documents():
         print("Documents indexed successfully.")
         print("--------------------------------")
 
+def split_text(text, chunk_size=500):
+
+    words = text.split()
+
+    chunks = []
+
+    for i in range(0, len(words), chunk_size):
+
+        chunk = " ".join(
+            words[i:i + chunk_size]
+        )
+
+        if chunk.strip():
+            chunks.append(chunk)
+
+    return chunks
+
 
 # =========================================================
 # Search Documents
