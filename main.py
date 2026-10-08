@@ -47,10 +47,10 @@ def ollama_test():
 def ingest():
 
     try:
-        test_embedding()
-    #    ingest_documents()
+       # test_embedding()
+       ingest_documents()
 
-        return {
+       return {
             "message": "Documents successfully indexed"
         }
 
