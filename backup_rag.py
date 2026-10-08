@@ -1,12 +1,10 @@
 import os
+import ollama
 import chromadb
-
 from dotenv import load_dotenv
+
 from ollama import Client
 from pypdf import PdfReader
-from google import genai
-
-
 
 
 # =========================================================
@@ -16,57 +14,43 @@ from google import genai
 DOCUMENT_FOLDER = "documents"
 CHROMA_FOLDER = "chroma_db"
 
-EMBEDDING_MODEL = "gemini-embedding-2"
-EMBEDDING_DIMENSION = 768
-
+EMBEDDING_MODEL = "nomic-embed-text"
+#LLM_MODEL = "llama3.2"
 LLM_MODEL = "gemma4:31b"
-
+# Distance threshold
+# Lower distance = more similar
 RAG_DISTANCE_THRESHOLD = 1.2
-
-
-# =========================================================
-# Environment
-# =========================================================
-
-load_dotenv()
-
-OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-
-if not OLLAMA_API_KEY:
-    raise RuntimeError("OLLAMA_API_KEY is not configured")
-
-if not GEMINI_API_KEY:
-    raise RuntimeError("GEMINI_API_KEY is not configured")
-
-
-# =========================================================
-# Ollama Cloud
-# =========================================================
-
-ollama_client = Client(
-    host="https://ollama.com",
-    headers={
-        "Authorization": f"Bearer {OLLAMA_API_KEY}"
-    }
-)
-
-
-# =========================================================
-# Gemini Cloud Embedding
-# =========================================================
-
-gemini_client = genai.Client(
-    api_key=GEMINI_API_KEY
-)
 
 
 # =========================================================
 # ChromaDB
 # =========================================================
 
+# client = chromadb.PersistentClient(
+#     path=CHROMA_FOLDER
+# )
+
+load_dotenv()
+OLLAMA_API_KEY = os.getenv("OLLAMA_API_KEY")
+
+print ("OLLAMA_API_KEY:", OLLAMA_API_KEY)
+if not OLLAMA_API_KEY:
+    raise RuntimeError("OLLAMA_API_KEY is not configured")
+
+client = Client(
+    host="https://ollama.com",
+    headers={
+        "Authorization": f"Bearer {OLLAMA_API_KEY}"
+    }
+)
+
+local_client = Client(
+    host="http://localhost:11434"
+)
+
+
 chroma_client = chromadb.PersistentClient(
-    path=CHROMA_FOLDER
+    path="./chroma_db"
 )
 
 collection = chroma_client.get_or_create_collection(
@@ -74,26 +58,33 @@ collection = chroma_client.get_or_create_collection(
 )
 
 
-def create_embedding(text):
 
-    response = gemini_client.models.embed_content(
-        model=EMBEDDING_MODEL,
-        contents=text,
-        config={
-            "output_dimensionality": EMBEDDING_DIMENSION
-        }
+# collection = client.get_or_create_collection(
+#     name="documents"
+# )
+
+
+# =========================================================
+# Read PDF
+# =========================================================
+def test_embedding():
+
+    print("Testing embedding...")
+
+    response = local_client.embed(
+        model="embeddinggemma",
+        input="This is a test sentence."
     )
 
-    return response.embeddings[0].values
+    print("Embedding response received")
 
-def ask_llm(question):
+    print("Number of embeddings:",
+          len(response["embeddings"]))
 
-    response = ollama_client.generate(
-        model=LLM_MODEL,
-        prompt=question
-    )
+    print("Embedding size:",
+          len(response["embeddings"][0]))
 
-    return response["response"]
+    return response
 
 def read_pdf(file_path):
 
@@ -109,6 +100,54 @@ def read_pdf(file_path):
             text += page_text + "\n"
 
     return text
+
+def test_ollama():
+
+    response = client.generate(
+        model="gemma4:31b",
+        prompt="Say hello in one sentence."
+    )
+
+    return response["response"]
+
+# =========================================================
+# Split text into chunks
+# =========================================================
+
+def split_text(text, chunk_size=500):
+
+    words = text.split()
+
+    chunks = []
+
+    for i in range(0, len(words), chunk_size):
+
+        chunk = " ".join(
+            words[i:i + chunk_size]
+        )
+
+        if chunk.strip():
+            chunks.append(chunk)
+
+    return chunks
+
+
+# =========================================================
+# Create Embedding
+# =========================================================
+
+def create_embedding(text):
+
+    # response = ollama.embed(
+    #     model=EMBEDDING_MODEL,
+    #     input=text
+    # )
+
+    response = local_client.embed(
+            model="embeddinggemma",
+            input=text
+        )
+    return response["embeddings"][0]
 
 
 # =========================================================
@@ -235,6 +274,28 @@ def search_documents(
     )
 
     return results
+
+
+# =========================================================
+# Normal LLM Answer
+# =========================================================
+
+def ask_llm(question):
+
+    # response = ollama.generate(
+
+    #     model=LLM_MODEL,
+
+    #     prompt=question
+    # )
+    response = client.generate(
+   
+           model=LLM_MODEL,
+   
+           prompt=question
+       )
+    return response["response"]
+
 
 # =========================================================
 # RAG + Normal LLM
@@ -407,7 +468,7 @@ ANSWER:
     # Send context + question to Llama
     # -----------------------------------------------------
 
-    response = ollama_client.generate(
+    response = client.generate(
 
         model=LLM_MODEL,
 

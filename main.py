@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from rag import ingest_documents, ask_rag,test_ollama,test_embedding
+from backup_rag import ingest_documents, ask_rag,test_ollama,test_embedding
 import ollama
 from fastapi import FastAPI
 from models import Product
